@@ -167,3 +167,8 @@ vault write database/roles/appro \
 * Get your creds through the named endpoint, example:
 
 `vault read database/creds/appro`
+
+# The Witness app
+The witness app is here to show us that stuff actually works.
+
+Launch it manually, after having launched the "token-tower" container -- our trusted entity.
