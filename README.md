@@ -4,7 +4,7 @@ Helper container acting as trusted party to make approle stuff work.
 # Status
 Don't look at it.
 
-This is just a POC container. Do not run this in production, it is a quick and dirty thing.
+This is just a POC container and a simple 'witness' python app. Do not run this container in production, it is a quick and dirty thing.
 Instead, you'd likely have your configuration management tool act as the trust entity this container simulates.
 
 # Assumptions
@@ -26,6 +26,33 @@ From the page above, and just in case it dissapears, the nice schema is this one
 
 ![approle_flow](assets/vault-approle-workflow2-e748e541.png)
 
+
+# Vault (and consul)container
+Create the necessary docker volumes.
+
+**Vault**
+
+I have the following server config file, living in the `vault_config` docker volume:
+
+```
+storage "consul" {
+  address = "consul1:8500"
+  path = "vault"
+}
+
+listener "tcp" {
+  address = "0.0.0.0:8200"
+  tls_disable = true // dev only
+}
+```
+
+`docker run -d --network vault_net --restart=unless-stopped --name=vault --cap-add=IPC_LOCK -v vault_config:/vault/config -v vault_logs:/vault/logs -v vault_file:/vault/file vault server`
+
+**Consul**
+
+`docker run -d --network vault_net --restart=unless-stopped --name consul1 -p 8500:8500 -p 8600:8600/udp -v consul_data_1:/consul/data -v consul_config_1:/consul/config consul agent -server -ui -client 0.0.0.0 -node consul1 -bootstrap`
+
+# This container -- vault-token-tower
 
 The container will use its own Vault token, with a policy capable of dealing with the approle auth backend, such as the one below.
 
@@ -54,8 +81,8 @@ path "sys/policy/*" {
 Create the policy, and issue a token against it. It will be used by the vault-tower container app.
 
 ## vault-token-tower token
-The token value is expected to be found at the root of the container, in a file called `token`.
-
+The token value is expected to be found at the root of the container, in a file called `token`. You will get this file as an admin and put it there manually.
+It is your trusted container, it's gotta start somewhere (I guess).
 
 # Endpoints
 ## roleid
