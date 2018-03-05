@@ -7,6 +7,12 @@ Don't look at it.
 This is just a POC container. Do not run this in production, it is a quick and dirty thing.
 Instead, you'd likely have your configuration management tool act as the trust entity this container simulates.
 
+# Assumptions
+* docker hosts for vault and postgres container, sharing network called "vault_net"
+* `vault` and `psql` are the respective names of the containers.
+* Secret backends are mounted at their default locations.
+* `approle` auth backend is enabled.
+
 # Overview
 
 Based on what is described in Hashicorp's Vault [approle advanced features](https://www.vaultproject.io/guides/identity/authentication.html), this container will act at the trusted entity to:
@@ -92,3 +98,72 @@ curl -s localhost:5000/token |jq
   }
 }
 ```
+
+# Example use-case with postgreSQL
+
+The goal of this use-case is to have a random script read out data from a postgres database `vault_sandbox` and table `kv`.
+
+## postgres docker
+`docker volume create --name=pgdata`
+
+`docker run --network=vault_net -p 5432:5432 --name psql -e POSTGRES_PASSWORD=yourpass -v pgdata:/var/lib/postgresql/data -d postgres:9.5
+`
+
+## Database
+Skipping over the details, `createdb vault_sandbox`
+
+
+## Table
+Create a table `kv`, arbitrarily with this schema:
+
+```
+CREATE TABLE public.kv
+(
+    id integer NOT NULL DEFAULT nextval('kv_id_seq'::regclass),
+    key text COLLATE pg_catalog."default",
+    value text COLLATE pg_catalog."default",
+    CONSTRAINT kv_pkey PRIMARY KEY (id)
+)
+WITH (
+    OIDS = FALSE
+);
+```
+## Vault 
+* Mount secrets backend
+
+`vault mount database`
+
+* Configure database. Roles are mapped here already.
+
+`vault write database/config/vault_sandbox plugin_name=postgresql-database-plugin allowed_roles="admin,appro" connection_url="postgresql://vault:Vault@psql:5432/vault_sandbox?sslmode=disable"`
+
+### Vault roles
+* Configure vault roles, that will give specific grants and revoke based on what you want.
+
+```
+vault write database/roles/admin \
+  db_name=vault_sandbox \
+  creation_statements="CREATE ROLE \"{{name}}\" WITH SUPERUSER LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}';" \
+  revocation_sql="SELECT revoke_access('{{name}}'); DROP user \"{{name}}\";" \
+  default_ttl="2h" \
+  max_ttl="12h"
+```
+
+The `approle` can only read the data. We will use that one actually.
+
+```
+vault write database/roles/appro \
+  db_name=vault_sandbox \
+  creation_statements="CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}'; GRANT SELECT ON   ALL TABLES IN SCHEMA public TO \"{{name}}\";" \
+  revocation_sql="SELECT revoke_access('{{name}}'); DROP user \"{{name}}\";"  \
+  default_ttl="1h" \
+  max_ttl="24h"
+```
+
+* List roles
+
+` vault list database/roles`
+
+* Get your creds through the named endpoint, example:
+
+`vault read database/creds/appro`
