@@ -234,6 +234,11 @@ path "auth/approle/login" {
 path "database/creds/appro" {
   capabilities = [ "read"  ]
 }
+
+# needed if you want to allow the app to also revoke lease
+path "sys/revoke/database/creds/appro/*" {
+  capabilities = [ "update" ]
+}
 ```
 
 Create the policy and the witness role:
@@ -271,7 +276,6 @@ Rows returned:
 I am done! I can now delete my non-needed postgreSQL credentials.
 
 My lease id is database/creds/appro/1f8af781-ad5d-1616-e97a-cf08e4d8802f, and that's all I need.
-(I am actually a stub right now. Permission denied on self._put('/v1/sys/revoke/{0}'.format(lease_id)), yet there is no path in the doc for that?)
 
 Process finished with exit code 0
 ```

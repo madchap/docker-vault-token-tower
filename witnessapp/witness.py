@@ -34,9 +34,7 @@ def get_psql_creds():
 
 
 def delete_psql_creds(leaseid):
-    # vc.revoke_secret(leaseid)
-    print("I am actually a stub right now. Permission denied on self._put('/v1/sys/revoke/{0}'.format(lease_id)),"
-          " yet there is no path in the doc for that?")
+    vc.revoke_secret(leaseid)
 
 
 def login_to_psql(dyn_user, dyn_passwd):
@@ -123,4 +121,5 @@ if __name__ == "__main__":
     print("\nI am done! I can now delete my non-needed postgreSQL credentials.")
     print("\nMy lease id is {}, and that's all I need.".format(psql_creds_lease_id))
 
+    # revoke the lease for the creds just used
     delete_psql_creds(psql_creds_lease_id)
