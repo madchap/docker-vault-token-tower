@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask
 # from flask import got_request_exception
 from flask_restful import Resource, Api
 from flask_jsonpify import jsonify

@@ -5,5 +5,6 @@ path "auth/approle/login" {
 
 # Access path to generate DB credentials
 path "database/creds/appro" {
-  capabilities = [ "read" ]
+  capabilities = [ "read"  ]
 }
+
