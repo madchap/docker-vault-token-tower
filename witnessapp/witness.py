@@ -34,7 +34,8 @@ def get_psql_creds():
 
 
 def delete_psql_creds(leaseid):
-    vc.revoke_secret(leaseid)
+    # vc.revoke_secret(leaseid)
+    print("Deleting happens here. Not doing it now, so that we can see the creds possibly.")
 
 
 def login_to_psql(dyn_user, dyn_passwd):
