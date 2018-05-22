@@ -4,8 +4,6 @@ Helper container acting as trusted party to make approle stuff work.
 You can `docker pull madchap/docker-vault-token-tower`.
 
 # Status
-Don't look at it.
-
 This is just a POC container and a simple 'witness' python app. Do not run this container in production, it is a quick and dirty thing.
 Instead, you'd likely have your configuration management tool act as the trust entity this container simulates.
 
@@ -35,15 +33,21 @@ listener "tcp" {
   address = "0.0.0.0:8200"
   tls_disable = true // dev only
 }
+
+ui = true
 ```
 
-`$ docker run -d --network vault_net --restart=unless-stopped --name=vault --cap-add=IPC_LOCK -v vault_config:/vault/config -v vault_logs:/vault/logs -v vault_file:/vault/file vault server`
+`$ docker run -d --network vault_net --restart=unless-stopped --name=vault --cap-add=IPC_LOCK -p 8200:8200 -v vault_config:/vault/config -v vault_logs:/vault/logs -v vault_file:/vault/file vault server`
+
+You can then access the UI on port 8200.
 
 **Consul**
 
 Get some persistence for (nearly) free.
 
 `$ docker run -d --network vault_net --restart=unless-stopped --name consul1 -p 8500:8500 -p 8600:8600/udp -v consul_data_1:/consul/data -v consul_config_1:/consul/config consul agent -server -ui -client 0.0.0.0 -node consul1 -bootstrap`
+
+The Consul UI can be reached on port 8500.
 
 # Overview of the small REST API server, vault-tower
 
