@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# /* ex: set filetype=python ts=4 sw=4 expandtab: */
+
 from flask import Flask
 # from flask import got_request_exception
 from flask_restful import Resource, Api
@@ -86,4 +90,4 @@ api.add_resource(get_roleid, '/roleid/<role_name>')
 api.add_resource(get_wrap_token, '/wraptoken/<role_name>')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',port=5000,debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=False)
