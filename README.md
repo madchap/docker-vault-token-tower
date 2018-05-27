@@ -8,12 +8,26 @@ This is just a POC container and a simple 'witness' python app. Do not run this 
 Instead, you'd likely have your configuration management tool act as the trust entity this container simulates.
 
 # Assumptions
-* docker hosts for vault and postgres container, sharing network called "vault_net"
+Not much thought was made to parametrize or make things very resilient. Therefore..
+
+* You have a compatible Vault version installed on your docker host.
+* You have a compatible `psql` version installed on your docker host.
+* You have `jq` installed on your docker host.
 * The witness app will run on the docker host.
-* `vault` and `psql` are the respective names of the containers.
 * Secret backends are mounted at their default locations.
-* `approle` auth backend is enabled.
-* `database` secrets backend is enabled.
+
+# Ansible
+To get started quickly, simply run this playbook. It was tested with ansible 2.5.
+
+```
+ansible-playbook site.yaml --tags up
+```
+
+To start over, you can remove everything with
+
+```
+ansible-playbook site.yaml --tags remove_all
+```
 
 # Pre-requisite containers to run Vault
 ## Vault (and consul) container
@@ -157,6 +171,8 @@ The goal of this use-case is to have a random script read out data from a postgr
 
 ## Database
 Skipping over the details, `createdb vault_sandbox`.
+
+Create a user `vault` with password `Vault` for example (You will need to change the script if you change the credentials).
 
 
 ## Table
