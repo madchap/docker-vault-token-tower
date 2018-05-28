@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-set -e
 
 # base of this script taken from https://raw.githubusercontent.com/hashicorp/best-practices/master/packer/config/vault/scripts/setup_vault.sh
 
-# docker containers in my case, running on same host
-psql_host=psql
+psql_host=psql  # docker container name
 consul_host=127.0.0.1
 export VAULT_ADDR="http://127.0.0.1:8200"
+base_dir=$(dirname $0)
 
 cget() { curl -sf "http://${consul_host}:8500/v1/kv/service/vault/$1?raw"; }
 
@@ -53,8 +52,6 @@ vault operator unseal $(cget unseal-key-1)
 echo "Authenticating"
 export VAULT_TOKEN=$(curl -sXGET ${consul_host}:8500/v1/kv/service/vault/root-token |jq -r .[].Value |base64 -d)
 
-echo "Token is $VAULT_TOKEN"
-
 echo "Mounting approle backend"
 vault auth enable approle
 
@@ -86,8 +83,15 @@ vault policy write witness-app ../policies/witnessapp.hcl
 echo "Initializing AppRole backend policies"
 vault policy write vault-tower ../policies/vault-token-tower-approle.hcl
 
+echo "Creating witness app role"
+vault write auth/approle/role/witness-role policies="witness-app"
+
 echo
 echo "Vault setup complete."
+
+echo
+echo "Issuing a token for the tower app."
+vault token create --display-name=vault-tower -policy=vault-tower -format=json |jq -r '.auth.client_token' > ../app/token
 
 instructions() {
 	cat <<EOF

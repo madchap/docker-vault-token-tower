@@ -88,7 +88,7 @@
         ports:
           - "8080:80"
         env:
-          PGADMIN_DEFAULT_EMAIL=fred.blaise@kudelskisecurity.com
+          PGADMIN_DEFAULT_EMAIL=demo@demo.com
           PGADMIN_DEFAULT_PASSWORD=yourpass
 
     - name: Sleeping a bit for containers to Initialize
@@ -99,12 +99,26 @@
     - name: Populate PostgreSQL data
       tags: up, psql, psql_data
       command: docker exec --user postgres -i psql /tmp/psql_config.sh > /tmp/psql_populate.log
+      ignore_errors: yes
 
     - name: Initialize Vault
       tags: vault, up, script
       shell: ../config/vault_config.sh > /tmp/test-vault.out
       args:
         executable: /bin/bash
+    
+    - name: UP vault-token-tower
+      tags: up, tower
+      docker_container:
+        name: vault-token-tower
+        auto_remove: yes
+        image: madchap/docker-vault-token-tower:latest
+        networks:
+          - name: vault_net
+        volumes:
+          - ../app:/app
+        ports:
+          - "5000:5000"
 
     - name: DOWN all containers
       tags: down
@@ -127,6 +141,7 @@
         - psql
         - vault
         - consul1
+        - vault-token-tower
 
     - name: REMOVE all volumes
       tags: remove_vols, remove_all

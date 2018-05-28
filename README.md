@@ -1,7 +1,11 @@
 # docker-vault-token-tower
 Helper container acting as trusted party to make approle stuff work.
 
-You can `docker pull madchap/docker-vault-token-tower`.
+You can `docker pull madchap/docker-vault-token-tower`. You can run it manually like:
+
+```
+docker run --rm --name=vault-token-tower --rm --network=vault_net -p 5000:5000 -v $PWD/app:/app madchap/docker-vault-token-tower:latest
+```
 
 # Status
 This is just a POC container and a simple 'witness' python app. Do not run this container in production, it is a quick and dirty thing.
@@ -109,11 +113,12 @@ Create the policy, and issue a token against it. It will be used by the vault-to
 $ vault policy write vault-tower vault-token-tower-approle.hcl
 ```
 
+## vault-token-tower token
+
 ```
 $ vault token create --display-name=vault-tower -policy=vault-tower
 ```
 
-## vault-token-tower token
 The token value is expected to be found at the root of the container, in a file called `token`. You will get this file as an admin and put it there manually.
 It is your trusted container, it's gotta start somewhere (I guess).
 

@@ -7,6 +7,7 @@ from flask import Flask
 from flask_restful import Resource, Api
 from flask_jsonpify import jsonify
 import hvac
+import os
 
 
 # # generic error handling
@@ -21,14 +22,6 @@ import hvac
 #     }
 # }
 
-app = Flask(__name__)
-# got_request_exception.connect(log_exception, app)
-# api = Api(app, errors=errors)
-api = Api(app)
-
-# initialize vault client
-#TODO make hostname a variable
-vc = hvac.Client(url="http://vault:8200", token=open('/app/token', 'r').read())
 
 
 class get_token(Resource):
@@ -81,7 +74,14 @@ def get_vault_status():
     #     time.sleep(10)
 
 
-# print vault status
+app = Flask(__name__)
+# got_request_exception.connect(log_exception, app)
+# api = Api(app, errors=errors)
+api = Api(app)
+
+# initialize vault client
+vc = hvac.Client(url="http://vault:8200", token=open('/app/token', 'r').read().strip())
+
 get_vault_status()
 
 # build endpoints
@@ -89,5 +89,4 @@ api.add_resource(get_token, '/token')
 api.add_resource(get_roleid, '/roleid/<role_name>')
 api.add_resource(get_wrap_token, '/wraptoken/<role_name>')
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+app.run(host='0.0.0.0', port=5000, debug=False)
