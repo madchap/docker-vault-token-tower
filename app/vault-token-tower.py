@@ -28,7 +28,7 @@ api = Api(app)
 
 # initialize vault client
 #TODO make hostname a variable
-vc = hvac.Client(url="http://vault:8200", token=open('token', 'r').read())
+vc = hvac.Client(url="http://vault:8200", token=open('/app/token', 'r').read())
 
 
 class get_token(Resource):
