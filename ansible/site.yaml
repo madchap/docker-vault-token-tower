@@ -1,0 +1,151 @@
+---
+- hosts: localhost
+  pre_tasks:
+    - name: UP all volumes
+      tags: up, volumes
+      docker_volume:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - consul_data_1
+        - consul_config_1
+        - vault_config
+        - vault_logs
+        - vault_file
+        - pgdata
+        - pgadmin_var_lib
+
+    - name: UP network vault_net
+      tags: up, network, vault
+      docker_network:
+        name: vault_net
+
+  tasks:
+    - name: UP Consul container
+      tags: consul, up
+      docker_container:
+        name: consul1
+        image: consul:latest
+        volumes:
+          - consul_data_1:/consul/data
+          - consul_config_1:/consul/config
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "8500:8500"
+          - "8600:8600/udp"
+        networks:
+          - name: vault_net
+        command: agent -server -ui -client 0.0.0.0 -node consul1 -bootstrap -bind=127.0.0.1
+        env:
+          CONSUL_UI_BETA: true
+
+    - name: UP Vault container
+      tags: vault, up
+      docker_container:
+        name: vault
+        image: vault:latest
+        volumes:
+          - vault_config:/vault/config
+          - vault_logs:/vault/logs
+          - vault_file:/vault/file
+          - ../config/config.hcl:/vault/config/config.hcl
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "8200:8200"
+        networks:
+          - name: vault_net
+        command: server
+        capabilities:
+          - IPC_LOCK
+
+
+    - name: UP PostgreSQL container
+      tags: up, psql
+      docker_container:
+        name: psql
+        image: postgres:9.5
+        volumes:
+          - pgdata:/var/lib/postgresql/data
+          - ../config/psql_config.sh:/tmp/psql_config.sh
+        ports:
+          - "5432:5432"
+        networks:
+          - name: vault_net
+        env:
+          POSTGRES_PASSWORD=yourpass
+
+    - name: UP pgadmin4
+      tags: up, pgadmin
+      docker_container:
+        name: pgadmin
+        image: dpage/pgadmin4:latest
+        volumes:
+          - pgadmin_var_lib:/var/lib/pgadmin
+        networks:
+          - name: vault_net
+        ports:
+          - "8080:80"
+        env:
+          PGADMIN_DEFAULT_EMAIL=fred.blaise@kudelskisecurity.com
+          PGADMIN_DEFAULT_PASSWORD=yourpass
+
+    - name: Sleeping a bit for containers to Initialize
+      tags: up, pause
+      pause:
+        seconds: 5
+
+    - name: Populate PostgreSQL data
+      tags: up, psql, psql_data
+      command: docker exec --user postgres -i psql /tmp/psql_config.sh > /tmp/psql_populate.log
+
+    - name: Initialize Vault
+      tags: vault, up, script
+      shell: ../config/vault_config.sh > /tmp/test-vault.out
+      args:
+        executable: /bin/bash
+
+    - name: DOWN all containers
+      tags: down
+      docker_container:
+        name: "{{ item }}"
+        state: stopped
+      loop:
+        - pgadmin
+        - psql
+        - vault
+        - consul1
+
+    - name: REMOVE all containers
+      tags: remove_containers, remove_all
+      docker_container:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - pgadmin
+        - psql
+        - vault
+        - consul1
+
+    - name: REMOVE all volumes
+      tags: remove_vols, remove_all
+      docker_volume:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - consul_data_1
+        - consul_config_1
+        - vault_config
+        - vault_logs
+        - vault_file
+        - pgdata
+        - pgadmin_var_lib
+
+    - name: REMOVE network vault_net
+      tags: remove_net, remove_all
+      docker_network:
+        name: vault_net
+        state: absent
+        force: yes
+
