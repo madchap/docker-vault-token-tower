@@ -142,6 +142,7 @@
         - vault
         - consul1
         - vault-token-tower
+      ignore_errors: yes
 
     - name: REMOVE all volumes
       tags: remove_vols, remove_all
@@ -156,6 +157,7 @@
         - vault_file
         - pgdata
         - pgadmin_var_lib
+      ignore_errors: yes
 
     - name: REMOVE network vault_net
       tags: remove_net, remove_all
@@ -163,4 +165,5 @@
         name: vault_net
         state: absent
         force: yes
+      ignore_errors: yes
 
