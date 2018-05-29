@@ -73,7 +73,7 @@ vault write database/roles/appro \
   db_name=vault_sandbox \
   creation_statements="CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}'; GRANT SELECT ON ALL TABLES IN SCHEMA public TO \"{{name}}\";" \
   revocation_sql="SELECT revoke_access('{{name}}'); DROP user \"{{name}}\";"  \
-  default_ttl="1h" \
+  default_ttl="1m" \
   max_ttl="24h"
 
 
@@ -91,7 +91,7 @@ echo "Vault setup complete."
 
 echo
 echo "Issuing a token for the tower app."
-vault token create --display-name=vault-tower -policy=vault-tower -format=json |jq -r '.auth.client_token' > ../app/token
+vault token create --display-name=vault-tower -period=60m -policy=vault-tower -format=json |jq -r '.auth.client_token' > ../app/token
 
 instructions() {
 	cat <<EOF

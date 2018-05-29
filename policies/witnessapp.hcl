@@ -12,5 +12,3 @@ path "database/creds/appro" {
 path "sys/revoke/database/creds/appro/*" {
   capabilities = [ "update" ]
 }
-
-

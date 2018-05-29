@@ -6,6 +6,8 @@ import hvac
 import psycopg2
 import requests
 import sys
+import pprint
+import time
 
 # you can launch me by hand
 
@@ -34,8 +36,12 @@ def get_psql_creds():
 
 
 def delete_psql_creds(leaseid):
-    # vc.revoke_secret(leaseid)
-    print("Deleting happens here. Not doing it now, so that we can see the creds possibly.")
+    print("Deleting lease.")
+    vc.revoke_secret(leaseid)
+
+def renew_psql_creds(leaseid):
+    print("Renewing lease.")
+    vc.renew_secret(leaseid)
 
 
 def login_to_psql(dyn_user, dyn_passwd):
@@ -49,7 +55,7 @@ def select_from_table():
     cur = conn.cursor()
     cur.execute("""select * from {}""".format(psql_table))
     rows = cur.fetchall()
-    print("\nRows returned:")
+    print("\nRows current in the database, and now returned:")
     for row in rows:
         print(" ", row[0], row[1], row[2])
 
@@ -103,10 +109,12 @@ if __name__ == "__main__":
 
     # get psql credentials from database/creds/vault_sandbox
     psql_creds = get_psql_creds()
-    print("Postgres dynamic creds: {}".format(psql_creds))
+    print("\nPostgres dynamic creds:")
+    (pprint.PrettyPrinter(indent=4)).pprint(psql_creds)
     psql_user = psql_creds['data']['username']
     psql_passwd = psql_creds['data']['password']
     psql_creds_lease_id = psql_creds['lease_id']
+    psql_lease_duration = psql_creds['lease_duration']
 
     # login to database
     try:
@@ -118,9 +126,15 @@ if __name__ == "__main__":
     # select records
     select_from_table()
 
+    print("\nMy lease id is {}, and that's all I need.\n".format(psql_creds_lease_id))
+
+    # renewing
+    print("Sleeping here for {}s, and will renew the lease. Watch the postgres role validity extend.".format(psql_lease_duration - 5))
+    time.sleep(psql_lease_duration - 5)
+    renew_psql_creds(psql_creds_lease_id)
+
     # revoking lease, thereby deleting creds
-    print("\nI am done! I can now delete my non-needed postgreSQL credentials.")
-    print("\nMy lease id is {}, and that's all I need.".format(psql_creds_lease_id))
+    print("\nI am done! I can now delete my non-needed postgreSQL credentials or wait until they expire (in {}s).".format(psql_lease_duration))
 
     # revoke the lease for the creds just used
-    delete_psql_creds(psql_creds_lease_id)
+    # delete_psql_creds(psql_creds_lease_id)

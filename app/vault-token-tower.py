@@ -7,8 +7,6 @@ from flask import Flask
 from flask_restful import Resource, Api
 from flask_jsonpify import jsonify
 import hvac
-import os
-
 
 # # generic error handling
 # def log_exception(sender, exception, **extra):
