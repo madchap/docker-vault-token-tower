@@ -9,7 +9,7 @@ import sys
 import pprint
 import time
 
-# you can launch me by hand
+# you can launch me by hand. python3 preferred.
 
 
 def get_data(url):
@@ -38,6 +38,7 @@ def get_psql_creds():
 def delete_psql_creds(leaseid):
     print("Deleting lease.")
     vc.revoke_secret(leaseid)
+
 
 def renew_psql_creds(leaseid):
     print("Renewing lease.")

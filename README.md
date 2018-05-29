@@ -8,17 +8,8 @@ docker run --rm --name=vault-token-tower --rm --network=vault_net -p 5000:5000 -
 ```
 
 # Status
-This is just a POC container and a simple 'witness' python app. Do not run this container in production, it is a quick and dirty thing.
+This is just a POC container and a simple 'witness' python app. It is a quick and dirty thing.
 Instead, you'd likely have your configuration management tool act as the trust entity this container simulates.
-
-# Assumptions
-Not much thought was made to parametrize or make things very resilient. Therefore..
-
-* You have a compatible Vault version installed on your docker host.
-* You have a compatible `psql` version installed on your docker host.
-* You have `jq` installed on your docker host.
-* The witness app will run on the docker host.
-* Secret backends are mounted at their default locations.
 
 # Ansible
 To get started quickly, simply run this playbook. It was tested with ansible 2.5.
@@ -33,7 +24,26 @@ To start over, you can remove everything with
 ansible-playbook site.yaml --tags remove_all
 ```
 
+You can then launch the `witness` app locally, such as:
+
+```
+$ python3 witnessapp/witness.py
+```
+
+# Assumptions
+Not much thought was made to parametrize or make things very resilient. Therefore..
+
+* You have a compatible Vault version installed on your docker host.
+* You have a compatible `psql` version installed on your docker host.
+* You have `jq` installed on your docker host.
+* The witness app will run on the docker host.
+* Secret backends are mounted at their default locations.
+
 # Pre-requisite containers to run Vault
+All the below details are only there for legacy reasons, and maybe also if you want a bit more information.
+
+Otherwise, take a look at the ansible `site.yaml`, it holds the truth.
+
 ## Vault (and consul) container
 Create the necessary docker volumes.
 
