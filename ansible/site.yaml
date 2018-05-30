@@ -130,6 +130,7 @@
         - psql
         - vault
         - consul1
+        - vault-token-tower
 
     - name: REMOVE all containers
       tags: remove_containers, remove_all
