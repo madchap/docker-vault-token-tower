@@ -7,6 +7,8 @@ from flask import Flask
 from flask_restful import Resource, Api
 from flask_jsonpify import jsonify
 import hvac
+import configparser
+import os
 
 # # generic error handling
 # def log_exception(sender, exception, **extra):
@@ -56,6 +58,7 @@ class get_wrap_token(Resource):
         if not vc.is_sealed():
             #TODO flexible ttl
             secret_info = vc.write("auth/approle/role/{}/secret-id".format(role_name), wrap_ttl='60s')
+            print(secret_info)
             return jsonify(wrap_token=secret_info['wrap_info']['token'])
         else:
             print("Vault is sealed. Cannot perform request.")
@@ -77,8 +80,12 @@ app = Flask(__name__)
 # api = Api(app, errors=errors)
 api = Api(app)
 
+config = configparser.ConfigParser()
+config.read(os.path.join(os.path.dirname(__file__), 'vault-token-tower.conf'))
+
 # initialize vault client
-vc = hvac.Client(url="http://vault:8200", token=open('/app/token', 'r').read().strip())
+vc = hvac.Client(url=config.get("vault", "vault_addr"),
+                 token=open('/app/token', 'r').read().strip())
 
 get_vault_status()
 
@@ -87,4 +94,8 @@ api.add_resource(get_token, '/token')
 api.add_resource(get_roleid, '/roleid/<role_name>')
 api.add_resource(get_wrap_token, '/wraptoken/<role_name>')
 
-app.run(host='0.0.0.0', port=5000, debug=False)
+app.run(
+        host=config.get('app', 'host'),
+        port=config.getint('app', 'port'),
+        debug=config.getboolean('app', 'debug')
+    )

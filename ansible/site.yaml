@@ -44,7 +44,7 @@
       tags: vault, up
       docker_container:
         name: vault
-        image: vault:latest
+        image: vault:0.10.4
         volumes:
           - vault_config:/vault/config
           - vault_logs:/vault/logs

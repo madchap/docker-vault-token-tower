@@ -7,6 +7,7 @@ RUN addgroup tower && \
 # get our flask for smallish API server
 RUN pip install flask flask-jsonpify flask-restful blinker
 RUN pip install hvac
+RUN pip install madchappy
 
 ENV APP_DIR /app
 
